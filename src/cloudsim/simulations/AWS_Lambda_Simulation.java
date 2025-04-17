@@ -241,57 +241,54 @@ public class AWS_Lambda_Simulation {
     }
 
     private static void printWarmStatus(double currentTime, Map<Integer, Map<Integer, Double>> warmFunctions, List<Vm> vmList) {
-        System.out.println("\n================ WARM FUNCTIONS STATUS ================");
-        System.out.println("Current time: " + currentTime);
-        System.out.println("+------+-------------------+-------------------------+");
-        System.out.println("| VM   | Function Type     | Time Left Warm (sec)   |");
-        System.out.println("+------+-------------------+-------------------------+");
-        
+        System.out.println("\n==================== WARM FUNCTIONS STATUS ====================");
+        System.out.printf("Current Time: %.2f sec\n", currentTime);
+        System.out.println("---------------------------------------------------------------");
+        System.out.printf("| %-5s | %-15s | %-20s |\n", "VM ID", "Function Type", "Time Left Warm (sec)");
+        System.out.println("---------------------------------------------------------------");
+    
         for (Vm vm : vmList) {
-            boolean hasWarmFunctions = false;
-            
+            boolean hasWarm = false;
+    
             for (Map.Entry<Integer, Map<Integer, Double>> entry : warmFunctions.entrySet()) {
-                int functionType = entry.getKey();
+                int funcType = entry.getKey();
                 Map<Integer, Double> vmTimes = entry.getValue();
-                
+    
                 if (vmTimes.containsKey(vm.getId())) {
-                    double lastExecTime = vmTimes.get(vm.getId());
-                    double timeLeftWarm = WARM_START_DURATION - (currentTime - lastExecTime);
-                    
-                    if (timeLeftWarm > 0) {
-                        System.out.format("| %-4d | %-17d | %-23.2f |\n", 
-                            vm.getId(), functionType, timeLeftWarm);
-                        hasWarmFunctions = true;
+                    double lastTime = vmTimes.get(vm.getId());
+                    double warmLeft = WARM_START_DURATION - (currentTime - lastTime);
+    
+                    if (warmLeft > 0) {
+                        System.out.printf("| %-5d | %-15d | %-20.2f |\n", vm.getId(), funcType, warmLeft);
+                        hasWarm = true;
                     }
                 }
             }
-            
-            if (!hasWarmFunctions) {
-                System.out.format("| %-4d | %-17s | %-23s |\n", 
-                    vm.getId(), "None", "N/A");
+    
+            if (!hasWarm) {
+                System.out.printf("| %-5d | %-15s | %-20s |\n", vm.getId(), "None", "N/A");
             }
         }
-        
-        System.out.println("+------+-------------------+-------------------------+");
+    
+        System.out.println("---------------------------------------------------------------");
     }
     
     private static void printMemoryUsage(double currentTime, Map<Integer, List<MemoryUsageRecord>> vmMemoryUsage, List<Vm> vmList) {
-        System.out.println("\n================ VM MEMORY USAGE ================");
-        System.out.println("Current time: " + currentTime);
-        System.out.println("+------+-------------------+------------------+");
-        System.out.println("| VM   | Used Memory (MB)  | Total Memory (MB)|");
-        System.out.println("+------+-------------------+------------------+");
-        
+        System.out.println("\n==================== VM MEMORY USAGE ====================");
+        System.out.printf("Current Time: %.2f sec\n", currentTime);
+        System.out.println("----------------------------------------------------------");
+        System.out.printf("| %-5s | %-18s | %-18s | %-6s |\n", "VM ID", "Used Memory (MB)", "Total Memory (MB)", "%Used");
+        System.out.println("----------------------------------------------------------");
+    
         for (Vm vm : vmList) {
-            double currentMemoryUsage = calculateCurrentMemoryUsage(currentTime, vmMemoryUsage.get(vm.getId()));
-            double totalMemory = vm.getRam();
-            double memoryPercentage = (currentMemoryUsage / totalMemory) * 100;
-            
-            System.out.format("| %-4d | %-17.2f | %-16.2f | (%.1f%%)\n", 
-                vm.getId(), currentMemoryUsage, totalMemory, memoryPercentage);
+            double usedMem = calculateCurrentMemoryUsage(currentTime, vmMemoryUsage.get(vm.getId()));
+            double totalMem = vm.getRam();
+            double percent = (usedMem / totalMem) * 100.0;
+    
+            System.out.printf("| %-5d | %-18.2f | %-18.2f | %-5.1f%% |\n", vm.getId(), usedMem, totalMem, percent);
         }
-        
-        System.out.println("+------+-------------------+------------------+");
+    
+        System.out.println("----------------------------------------------------------");
     }
     
     private static double calculateCurrentMemoryUsage(double currentTime, List<MemoryUsageRecord> memoryRecords) {
